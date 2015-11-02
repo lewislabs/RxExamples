@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Reactive.Disposables;
+using System.Timers;
 
 namespace RxExamples
 {
@@ -7,11 +8,22 @@ namespace RxExamples
     {
         public IDisposable Subscribe(IObserver<int> observer)
         {
-            observer.OnNext(0);
-            observer.OnNext(2);
-            observer.OnNext(3);
-            observer.OnCompleted();
-            return Disposable.Create(()=>Console.Out.WriteLine("Disposed"));
+            var count = 0;
+            ElapsedEventHandler handler = (s, e) =>
+            {
+                count++;
+                observer.OnNext(count);
+            };
+            observer.OnNext(count);
+            var t = new Timer { Interval = 500 };
+            t.Elapsed += handler;
+            t.Start();
+            return Disposable.Create(() =>
+            {
+                t.Stop();
+                t.Elapsed -= handler;
+                Console.Out.WriteLine("Disposed");
+            });
         }
     }
 }

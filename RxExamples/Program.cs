@@ -9,15 +9,7 @@ namespace RxExamples
     {
         static void Main(string[] args)
         {
-            var observable = Observable.Create<int>(observer =>
-            {
-                Console.Out.WriteLine("New Subscription");
-                observer.OnNext(0);
-                observer.OnNext(1);
-                observer.OnNext(2);
-                observer.OnCompleted();
-                return Disposable.Empty;
-            });
+            var observable = Observable.Throw<Exception>(new Exception("Burp"));
             observable.Subscribe(i => Console.Out.WriteLine(i),
                 error => Console.Out.WriteLine(error),
                 () => Console.Out.WriteLine("Completed"));

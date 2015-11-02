@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reactive.Disposables;
 
 namespace RxExamples
 {
@@ -10,15 +11,7 @@ namespace RxExamples
             observer.OnNext(2);
             observer.OnNext(3);
             observer.OnCompleted();
-            return new MyDisposable();
-        }
-
-        private sealed class MyDisposable : IDisposable
-        {
-            public void Dispose()
-            {
-                Console.Out.WriteLine("Disposed Subscription");
-            }
+            return Disposable.Empty;
         }
     }
 }

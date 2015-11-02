@@ -7,7 +7,9 @@ namespace RxExamples
         static void Main(string[] args)
         {
             var observable = new MyRandomObservable();
-            observable.Subscribe(new MyRandomObserver());
+            var disposable = observable.Subscribe(new MyRandomObserver());
+            Console.ReadKey();
+            disposable.Dispose();
             Console.ReadKey();
         }
     }

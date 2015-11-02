@@ -11,7 +11,7 @@ namespace RxExamples
             observer.OnNext(2);
             observer.OnNext(3);
             observer.OnCompleted();
-            return Disposable.Empty;
+            return Disposable.Create(()=>Console.Out.WriteLine("Disposed"));
         }
     }
 }

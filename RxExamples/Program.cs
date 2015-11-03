@@ -9,10 +9,24 @@ namespace RxExamples
     {
         static void Main(string[] args)
         {
-            var observable = Observable.Throw<Exception>(new Exception("Burp"));
-            observable.Subscribe(i => Console.Out.WriteLine(i),
-                error => Console.Out.WriteLine(error),
-                () => Console.Out.WriteLine("Completed"));
+            Observable.Range(0, 10)
+                .Subscribe(i => Console.Out.WriteLine($"Observable.Range Got {i}"),
+                         () => Console.Out.WriteLine("Observable.Range Completed"));
+
+            Observable.Generate(0,
+                i => i <= 10,
+                i => i + 2,
+                i => i)
+                .Subscribe(i => Console.Out.WriteLine($"Observable.Generate Got {i}"),
+                        () => Console.Out.WriteLine("Observable.Generate Completed"));
+
+            Observable.Interval(TimeSpan.FromSeconds(1))
+                .Subscribe(i => Console.Out.WriteLine($"Observable.Interval Got {i}"));
+
+            Observable.Timer(TimeSpan.FromSeconds(10))
+                .Subscribe(i => Console.Out.WriteLine($"Observable.Timer Got {i}"),
+                        () => Console.Out.WriteLine("Observable.Timer Completed"));
+
             Console.ReadKey();
         }
     }

@@ -1,32 +1,43 @@
 ﻿using System;
-using System.Reactive.Disposables;
-using System.Reactive.Linq;
-using System.Threading;
+using System.Reactive.Subjects;
 
 namespace RxExamples
 {
+    public class MyMutable
+    {
+        public int Item { get; set; }
+
+        public MyMutable(int item)
+        {
+            Item = item;
+        }
+    }
+
+
     class Program
     {
         static void Main(string[] args)
         {
-            Observable.Range(0, 10)
-                .Subscribe(i => Console.Out.WriteLine($"Observable.Range Got {i}"),
-                         () => Console.Out.WriteLine("Observable.Range Completed"));
-
-            Observable.Generate(0,
-                i => i <= 10,
-                i => i + 2,
-                i => i)
-                .Subscribe(i => Console.Out.WriteLine($"Observable.Generate Got {i}"),
-                        () => Console.Out.WriteLine("Observable.Generate Completed"));
-
-            Observable.Interval(TimeSpan.FromSeconds(1))
-                .Subscribe(i => Console.Out.WriteLine($"Observable.Interval Got {i}"));
-
-            Observable.Timer(TimeSpan.FromSeconds(10))
-                .Subscribe(i => Console.Out.WriteLine($"Observable.Timer Got {i}"),
-                        () => Console.Out.WriteLine("Observable.Timer Completed"));
-
+            var subject = new Subject<int>();
+            subject.Subscribe(i =>
+            {
+                Console.Out.WriteLine($"Subscription 1 Got {i}");
+            });
+            subject.OnNext(1);
+            Console.ReadKey();
+            var replaySubject = new ReplaySubject<MyMutable>(1);
+            replaySubject.Subscribe(i =>
+            {
+                Console.Out.WriteLine($"Replay Subscription 1 Got {i.Item}");
+                i.Item = i.Item + 1; // BAD IDEA!
+            });
+            //Publish
+            replaySubject.OnNext(new MyMutable(1));
+            // Make a 2nd subscription
+            replaySubject.Subscribe(i =>
+            {
+                Console.Out.WriteLine($"Replay Subscription 2 Got {i.Item}");
+            });
             Console.ReadKey();
         }
     }

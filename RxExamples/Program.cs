@@ -1,43 +1,42 @@
 ﻿using System;
+using System.Reactive.Linq;
 using System.Reactive.Subjects;
+using System.Security.Cryptography.X509Certificates;
 
 namespace RxExamples
 {
-    public class MyMutable
+    public class EventClass
     {
-        public int Item { get; set; }
+        public event EventHandler<int> AnEvent;
 
-        public MyMutable(int item)
+        public void DoIt(int i)
         {
-            Item = item;
+            AnEvent?.Invoke(this, i);
         }
     }
-
 
     class Program
     {
         static void Main(string[] args)
         {
-            var subject = new Subject<int>();
-            subject.Subscribe(i =>
+            var eventClass = new EventClass();
+            var eventObservable = Observable.FromEventPattern<int>(h =>
             {
-                Console.Out.WriteLine($"Subscription 1 Got {i}");
+                eventClass.AnEvent += h;
+                Console.Out.WriteLine("Added handler to the event");
+            }, h =>
+            {
+                eventClass.AnEvent -= h;
+                Console.Out.WriteLine("Removed handler from the event");
             });
-            subject.OnNext(1);
             Console.ReadKey();
-            var replaySubject = new ReplaySubject<MyMutable>(1);
-            replaySubject.Subscribe(i =>
+            var disposable = eventObservable.Subscribe(i =>
             {
-                Console.Out.WriteLine($"Replay Subscription 1 Got {i.Item}");
-                i.Item = i.Item + 1; // BAD IDEA!
+                Console.Out.WriteLine($"Got {i.EventArgs}");
             });
-            //Publish
-            replaySubject.OnNext(new MyMutable(1));
-            // Make a 2nd subscription
-            replaySubject.Subscribe(i =>
-            {
-                Console.Out.WriteLine($"Replay Subscription 2 Got {i.Item}");
-            });
+            eventClass.DoIt(10);
+            Console.ReadKey();
+            disposable.Dispose();
             Console.ReadKey();
         }
     }

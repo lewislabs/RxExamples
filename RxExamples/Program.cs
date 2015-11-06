@@ -1,42 +1,52 @@
 ﻿using System;
+using System.Reactive.Disposables;
 using System.Reactive.Linq;
-using System.Reactive.Subjects;
-using System.Security.Cryptography.X509Certificates;
+using System.Threading;
+using Timer = System.Timers.Timer;
 
 namespace RxExamples
 {
-    public class EventClass
-    {
-        public event EventHandler<int> AnEvent;
-
-        public void DoIt(int i)
-        {
-            AnEvent?.Invoke(this, i);
-        }
-    }
-
-    class Program
+   class Program
     {
         static void Main(string[] args)
         {
-            var eventClass = new EventClass();
-            var eventObservable = Observable.FromEventPattern<int>(h =>
-            {
-                eventClass.AnEvent += h;
-                Console.Out.WriteLine("Added handler to the event");
-            }, h =>
-            {
-                eventClass.AnEvent -= h;
-                Console.Out.WriteLine("Removed handler from the event");
-            });
+            var observable = Observable.Create<int>(observer =>
+                            {
+                                Console.Out.WriteLine("Starting the timer.........");
+                                var timer = new Timer {Interval = 1000};
+                                var count = 0;
+                                timer.Elapsed += (sender, eventArgs) =>
+                                                {
+                                                    Console.Out.WriteLine($"Publishing {count}");
+                                                    observer.OnNext(count++);
+                                                };
+                                timer.Start();
+                                return Disposable.Create(() =>
+                                                {
+                                                    timer.Stop();
+                                                    Console.Out.WriteLine("Disposed..");
+                                                    timer.Dispose();
+                                                });
+                            });
+            Console.Out.WriteLine("Making the observable hot");
+            var connectable = observable.Publish();
+            Console.Out.WriteLine("Connect the hot observable");
+            var hotDisposable = connectable.Connect();
+            Thread.Sleep(5000);
+            Console.Out.WriteLine("Subscription 1");
+            var subscription1 = connectable.Subscribe(i => Console.Out.WriteLine($"Subscription 1 Got {i}"));
+            Thread.Sleep(2000);
+            Console.Out.WriteLine("Subscription 2");
+            var subscription2 = connectable.Subscribe(i => Console.Out.WriteLine($"Subscription 2 Got {i}"));
             Console.ReadKey();
-            var disposable = eventObservable.Subscribe(i =>
-            {
-                Console.Out.WriteLine($"Got {i.EventArgs}");
-            });
-            eventClass.DoIt(10);
+            Console.Out.WriteLine("Disposing Subscription 1");
+            subscription1.Dispose();
             Console.ReadKey();
-            disposable.Dispose();
+            Console.Out.WriteLine("Disposing Subscription 2....the stream goes on.");
+            subscription2.Dispose();
+            Console.ReadKey();
+            Console.Out.WriteLine("Dispose the hot observable.");
+            hotDisposable.Dispose();
             Console.ReadKey();
         }
     }

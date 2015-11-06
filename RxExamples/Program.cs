@@ -1,8 +1,9 @@
 ﻿using System;
+using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Threading;
-using Timer = System.Timers.Timer;
+using System.Threading.Tasks;
 
 namespace RxExamples
 {
@@ -12,38 +13,23 @@ namespace RxExamples
         {
             var observable = Observable.Create<int>(observer =>
                             {
-                                Console.Out.WriteLine("Starting the timer.........");
-                                var timer = new Timer {Interval = 1000};
-                                var count = 0;
-                                timer.Elapsed += (sender, eventArgs) =>
-                                                {
-                                                    Console.Out.WriteLine($"Publishing {count}");
-                                                    observer.OnNext(count++);
-                                                };
-                                timer.Start();
-                                return Disposable.Create(() =>
-                                                {
-                                                    timer.Stop();
-                                                    Console.Out.WriteLine("Disposed..");
-                                                    timer.Dispose();
-                                                });
+                                Console.Out.WriteLine($"Thread ID={Thread.CurrentThread.ManagedThreadId}");
+                                Thread.Sleep(5000);
+                                observer.OnNext(1);
+                                observer.OnNext(2);
+                                observer.OnNext(3);
+                                observer.OnCompleted();
+                                return Disposable.Empty;
                             });
-            Console.Out.WriteLine("Making the observable hot");
-            var refCountObservable = observable
-                .Publish()
-                .RefCount();
-            Thread.Sleep(1000);
-            Console.Out.WriteLine("Subscription 1");
-            var subscription1 = refCountObservable.Subscribe(i => Console.Out.WriteLine($"Subscription 1 Got {i}"));
-            Thread.Sleep(2000);
-            Console.Out.WriteLine("Subscription 2");
-            var subscription2 = refCountObservable.Subscribe(i => Console.Out.WriteLine($"Subscription 2 Got {i}"));
-            Console.ReadKey();
-            Console.Out.WriteLine("Disposing Subscription 1");
-            subscription1.Dispose();
-            Console.ReadKey();
-            Console.Out.WriteLine("Disposing Subscription 2....the stream dies as well.");
-            subscription2.Dispose();
+            observable
+                .SubscribeOn(NewThreadScheduler.Default)
+                .ObserveOn(TaskPoolScheduler.Default)
+                .Subscribe(i =>
+                           {
+                               Console.Out.WriteLine($"Got {i} on ThreadId={Thread.CurrentThread.ManagedThreadId}");
+                               Thread.Sleep(1000);
+                           });
+            Thread.Sleep(5000);
             Console.ReadKey();
         }
     }

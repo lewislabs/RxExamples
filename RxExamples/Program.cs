@@ -29,24 +29,21 @@ namespace RxExamples
                                                 });
                             });
             Console.Out.WriteLine("Making the observable hot");
-            var connectable = observable.Publish();
-            Console.Out.WriteLine("Connect the hot observable");
-            var hotDisposable = connectable.Connect();
-            Thread.Sleep(5000);
+            var refCountObservable = observable
+                .Publish()
+                .RefCount();
+            Thread.Sleep(1000);
             Console.Out.WriteLine("Subscription 1");
-            var subscription1 = connectable.Subscribe(i => Console.Out.WriteLine($"Subscription 1 Got {i}"));
+            var subscription1 = refCountObservable.Subscribe(i => Console.Out.WriteLine($"Subscription 1 Got {i}"));
             Thread.Sleep(2000);
             Console.Out.WriteLine("Subscription 2");
-            var subscription2 = connectable.Subscribe(i => Console.Out.WriteLine($"Subscription 2 Got {i}"));
+            var subscription2 = refCountObservable.Subscribe(i => Console.Out.WriteLine($"Subscription 2 Got {i}"));
             Console.ReadKey();
             Console.Out.WriteLine("Disposing Subscription 1");
             subscription1.Dispose();
             Console.ReadKey();
-            Console.Out.WriteLine("Disposing Subscription 2....the stream goes on.");
+            Console.Out.WriteLine("Disposing Subscription 2....the stream dies as well.");
             subscription2.Dispose();
-            Console.ReadKey();
-            Console.Out.WriteLine("Dispose the hot observable.");
-            hotDisposable.Dispose();
             Console.ReadKey();
         }
     }
